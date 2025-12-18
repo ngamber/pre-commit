@@ -152,6 +152,26 @@ repos:
       # Skip values-only validation in CI
 ```
 
+### Option 4: Limit to Specific Directories
+
+Use the `files` parameter to restrict hooks to specific paths:
+
+```yaml
+repos:
+ - repo: https://github.com/ngamber/pre-commit
+   rev: main
+   hooks:
+     - id: helm-validate-custom-charts
+       files: ^argocd/(grafana|mimir)/  # Only validate grafana and mimir
+     - id: helm-validate-values-only
+       files: ^argocd/loki/  # Only validate loki values
+```
+
+**Use cases:**
+- Testing changes in specific charts
+- Excluding problematic charts temporarily
+- Faster validation during development
+
 ---
 
 ## Features
@@ -289,12 +309,23 @@ pre-commit install
 Test before committing:
 
 ```bash
-# Run all hooks
+# Run all hooks on all files
 pre-commit run --all-files
 
-# Run specific hook
+# Run specific hook on all files
 pre-commit run helm-template-all --all-files
 pre-commit run helm-validate-custom-charts --all-files
+
+# Run on specific files
+pre-commit run --files argocd/grafana/values.yaml
+pre-commit run --files argocd/grafana/Chart.yaml argocd/grafana/values.yaml
+
+# Run on specific directories
+pre-commit run --files argocd/grafana/*
+pre-commit run --files argocd/*/values.yaml
+
+# Run only on staged files (default behavior)
+pre-commit run
 ```
 
 ---
@@ -368,6 +399,111 @@ Git-based charts (using `path` instead of `chart` in ApplicationSets) are automa
 
 ---
 
+## Running Hooks on Specific Files/Directories
+
+Pre-commit hooks support multiple ways to target specific files and directories:
+
+### Command-Line Options
+
+```bash
+# Run on specific files
+pre-commit run --files argocd/grafana/values.yaml
+pre-commit run --files argocd/grafana/Chart.yaml argocd/grafana/values.yaml
+
+# Run on specific directories (using shell globbing)
+pre-commit run --files argocd/grafana/*
+pre-commit run --files argocd/*/values.yaml
+
+# Run on all files matching a pattern
+pre-commit run --files 'argocd/grafana/**/*'
+
+# Run specific hook on specific files
+pre-commit run helm-validate-custom-charts --files argocd/grafana/Chart.yaml
+
+# Run only on staged files (default behavior)
+pre-commit run
+
+# Run on all files
+pre-commit run --all-files
+```
+
+### Configuration-Based Filtering
+
+Limit hooks to specific directories in `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/ngamber/pre-commit
+    rev: main
+    hooks:
+      # Only validate grafana and mimir custom charts
+      - id: helm-validate-custom-charts
+        files: ^argocd/(grafana|mimir)/
+      
+      # Only validate loki values
+      - id: helm-validate-values-only
+        files: ^argocd/loki/
+      
+      # Validate all ApplicationSets (default behavior)
+      - id: helm-validate-appsets
+```
+
+**Regex patterns for `files` parameter:**
+- `^argocd/grafana/` - Only grafana directory
+- `^argocd/(grafana|mimir)/` - Multiple specific directories
+- `^argocd/.*/values\.yaml$` - All values.yaml files
+- `^argocd/(?!mimir)` - All except mimir (negative lookahead)
+
+### Exclude Specific Files
+
+Exclude problematic files temporarily:
+
+```yaml
+repos:
+  - repo: https://github.com/ngamber/pre-commit
+    rev: main
+    hooks:
+      - id: helm-validate-custom-charts
+        exclude: ^argocd/mimir/  # Skip mimir validation
+```
+
+### Built-in File Pattern Filtering
+
+Each hook has built-in file patterns that automatically filter relevant files:
+
+- **helm-template-all**: Runs on all `.yaml` and `.yml` files
+- **helm-validate-custom-charts**: Only runs on `Chart.yaml` and `templates/*.yaml` files
+- **helm-validate-values-only**: Only runs on `values.yaml` files
+- **helm-validate-appsets**: Only runs on files in `argo-cd/appsets/`
+
+These patterns ensure hooks only run when relevant files change.
+
+### Practical Examples
+
+**During development - test only your changes:**
+```bash
+# Test only the chart you're working on
+pre-commit run --files argocd/grafana/*
+
+# Test only values files you changed
+pre-commit run helm-validate-values-only --files argocd/loki/values.yaml
+```
+
+**In CI - validate everything:**
+```bash
+# Run all hooks on all files
+pre-commit run --all-files
+```
+
+**Temporarily skip problematic charts:**
+```yaml
+# In .pre-commit-config.yaml
+- id: helm-validate-custom-charts
+  exclude: ^argocd/(mimir|tempo)/  # Skip these until fixed
+```
+
+---
+
 ## Development
 
 ### Testing Locally
@@ -381,6 +517,10 @@ pre-commit run helm-template-all --all-files
 pre-commit run helm-validate-custom-charts --all-files
 pre-commit run helm-validate-values-only --all-files
 pre-commit run helm-validate-appsets --all-files
+
+# Test on specific directories
+pre-commit run --files argocd/grafana/*
+pre-commit run --files argocd/loki/values.yaml
 ```
 
 ### Contributing
