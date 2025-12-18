@@ -1,22 +1,61 @@
-# Example pre-commit configuration for Helm chart validation
-# Copy this to your repository root as .pre-commit-config.yaml
+# Example pre-commit configuration for Helm validation hooks
+# Copy this file to your repository root as .pre-commit-config.yaml
 
+# Option 1: Comprehensive validation (Recommended)
+# Use a single hook that validates everything
 repos:
   - repo: https://github.com/ngamber/pre-commit
-    rev: main  # Use a specific tag/release in production
+    rev: main  # or use a specific version tag like v1.0.0
     hooks:
-      - id: helm-template-validate
-        # Optional: Customize chart directories and ApplicationSet location
-        args:
-          - --chart-dirs=argocd
-          - --appset-dir=argo-cd/appsets
+      - id: helm-template-all
 
-# Example with multiple chart directories:
+# Option 2: Granular validation
+# Use separate hooks for different validation types
+# Provides better control and faster execution
 # repos:
 #   - repo: https://github.com/ngamber/pre-commit
 #     rev: main
 #     hooks:
-#       - id: helm-template-validate
-#         args:
-#           - --chart-dirs=charts,helm,argocd
-#           - --appset-dir=argo-cd/appsets
+#       - id: helm-validate-custom-charts
+#       - id: helm-validate-values-only
+#       - id: helm-validate-appsets
+
+# Option 3: Custom mix
+# Pick and choose which validations you need
+# repos:
+#   - repo: https://github.com/ngamber/pre-commit
+#     rev: main
+#     hooks:
+#       - id: helm-validate-custom-charts  # Always validate custom charts
+#       - id: helm-validate-appsets        # Always validate ApplicationSets
+#       # Skip values-only validation if not needed
+
+# Option 4: Legacy hook (backward compatibility)
+# repos:
+#   - repo: https://github.com/ngamber/pre-commit
+#     rev: main
+#     hooks:
+#       - id: helm-template-validate  # Same as helm-template-all
+
+# Additional recommended hooks for Kubernetes/Helm projects
+# repos:
+#   - repo: https://github.com/pre-commit/pre-commit-hooks
+#     rev: v4.5.0
+#     hooks:
+#       - id: trailing-whitespace
+#       - id: end-of-file-fixer
+#       - id: check-yaml
+#         args: ['--unsafe']  # Allow custom YAML tags
+#       - id: check-added-large-files
+#       - id: check-merge-conflict
+#
+#   - repo: https://github.com/Lucas-C/pre-commit-hooks
+#     rev: v1.5.4
+#     hooks:
+#       - id: remove-tabs
+#
+#   - repo: https://github.com/jumanjihouse/pre-commit-hooks
+#     rev: 3.0.0
+#     hooks:
+#       - id: shellcheck
+#       - id: shfmt

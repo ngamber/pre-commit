@@ -1,7 +1,51 @@
+# Helm Validation Hooks for ArgoCD Repositories
+# These hooks validate Helm charts and ApplicationSets in ArgoCD-managed repositories
+
+# Comprehensive validation - validates all chart types and ApplicationSets
+- id: helm-template-all
+  name: Helm Template Validation (All)
+  description: Comprehensive validation of all Helm charts and ApplicationSets
+  entry: hooks/helm-template-all.sh
+  language: script
+  files: \.(yaml|yml)$
+  pass_filenames: false
+  require_serial: true
+
+# Custom charts only - validates charts with Chart.yaml
+- id: helm-validate-custom-charts
+  name: Helm Custom Chart Validation
+  description: Validates custom Helm charts (with Chart.yaml)
+  entry: hooks/helm-validate-custom-charts.sh
+  language: script
+  files: ^argocd/.+/(Chart\.yaml|templates/.+\.(yaml|yml))$
+  pass_filenames: false
+  require_serial: true
+
+# Values-only charts - validates charts with only values.yaml
+- id: helm-validate-values-only
+  name: Helm Values-Only Chart Validation
+  description: Validates values-only charts (referencing upstream charts)
+  entry: hooks/helm-validate-values-only.sh
+  language: script
+  files: ^argocd/.+/values\.(yaml|yml)$
+  pass_filenames: false
+  require_serial: true
+
+# ApplicationSet validation - validates ApplicationSet YAML syntax
+- id: helm-validate-appsets
+  name: ApplicationSet Validation
+  description: Validates ApplicationSet YAML syntax and structure
+  entry: hooks/helm-validate-appsets.sh
+  language: script
+  files: ^argo-cd/appsets/.+\.(yaml|yml)$
+  pass_filenames: false
+  require_serial: true
+
+# Legacy hook - kept for backward compatibility (same as helm-template-all)
 - id: helm-template-validate
-  name: Helm Template Validation
-  description: Validates Helm charts by running helm template
-  entry: hooks/helm-template-validate.sh
+  name: Helm Template Validation (Legacy)
+  description: Legacy hook - use helm-template-all instead
+  entry: hooks/helm-template-all.sh
   language: script
   files: \.(yaml|yml)$
   pass_filenames: false
