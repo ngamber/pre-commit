@@ -1,0 +1,8 @@
+- id: helm-template-validate
+  name: Helm Template Validation
+  description: Validates Helm charts by running helm template
+  entry: hooks/helm-template-validate.sh
+  language: script
+  files: \.(yaml|yml)$
+  pass_filenames: false
+  require_serial: true

@@ -1,0 +1,22 @@
+# Example pre-commit configuration for Helm chart validation
+# Copy this to your repository root as .pre-commit-config.yaml
+
+repos:
+  - repo: https://github.com/ngamber/pre-commit
+    rev: main  # Use a specific tag/release in production
+    hooks:
+      - id: helm-template-validate
+        # Optional: Customize chart directories and ApplicationSet location
+        args:
+          - --chart-dirs=argocd
+          - --appset-dir=argo-cd/appsets
+
+# Example with multiple chart directories:
+# repos:
+#   - repo: https://github.com/ngamber/pre-commit
+#     rev: main
+#     hooks:
+#       - id: helm-template-validate
+#         args:
+#           - --chart-dirs=charts,helm,argocd
+#           - --appset-dir=argo-cd/appsets
