@@ -79,23 +79,33 @@ extract_chart_info_from_appset() {
         return 1
     fi
     
-    # Try to extract chart field (Helm repository)
-    chart_name=$(yq eval '.spec.template.spec.sources[] | select(.chart != null) | .chart' "$appset_file" 2>/dev/null || echo "")
+    # Try to extract chart field (Helm repository) - get first match only
+    chart_name=$(yq eval '.spec.template.spec.sources[] | select(.chart != null) | .chart' "$appset_file" 2>/dev/null | head -n1 || echo "")
     
-    # If no chart field, try path field (Git repository)
+    # If no chart field, try path field (Git repository) - get first match only
     if [ -z "$chart_name" ]; then
         local chart_path
-        chart_path=$(yq eval '.spec.template.spec.sources[] | select(.path != null) | .path' "$appset_file" 2>/dev/null || echo "")
+        chart_path=$(yq eval '.spec.template.spec.sources[] | select(.path != null) | .path' "$appset_file" 2>/dev/null | head -n1 || echo "")
         if [ -n "$chart_path" ]; then
             chart_name="git:${chart_path}"
         fi
     fi
     
-    # Extract repository URL
-    repo_url=$(yq eval '.spec.template.spec.sources[] | select(.repoURL != null) | .repoURL' "$appset_file" 2>/dev/null || echo "")
+    # Extract repository URL - get the one matching the chart/path
+    if [[ "$chart_name" == git:* ]]; then
+        # For git charts, get the repoURL that has a path field
+        repo_url=$(yq eval '.spec.template.spec.sources[] | select(.path != null) | .repoURL' "$appset_file" 2>/dev/null | head -n1 || echo "")
+    else
+        # For Helm charts, get the repoURL that has a chart field
+        repo_url=$(yq eval '.spec.template.spec.sources[] | select(.chart != null) | .repoURL' "$appset_file" 2>/dev/null | head -n1 || echo "")
+    fi
     
-    # Extract target revision
-    target_revision=$(yq eval '.spec.template.spec.sources[] | select(.targetRevision != null) | .targetRevision' "$appset_file" 2>/dev/null || echo "")
+    # Extract target revision - get the one matching the chart/path
+    if [[ "$chart_name" == git:* ]]; then
+        target_revision=$(yq eval '.spec.template.spec.sources[] | select(.path != null) | .targetRevision' "$appset_file" 2>/dev/null | head -n1 || echo "")
+    else
+        target_revision=$(yq eval '.spec.template.spec.sources[] | select(.chart != null) | .targetRevision' "$appset_file" 2>/dev/null | head -n1 || echo "")
+    fi
     
     # Resolve templated versions from generators
     if [[ "$target_revision" == *"{{.values.targetRevision}}"* ]]; then
