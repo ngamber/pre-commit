@@ -292,12 +292,19 @@ get_chart_directories() {
 # Get list of ApplicationSet files in repository
 get_appset_files() {
     local repo_root="$1"
-    local appsets_dir="${repo_root}/argo-cd/appsets"
+    local appsets_pattern="${APPSETS_DIR_PATTERN:-argo-cd/appsets}"
+    local appsets_dir="${repo_root}/${appsets_pattern}"
     
     if [ ! -d "$appsets_dir" ]; then
         log_error "ApplicationSets directory not found: $appsets_dir"
         return 1
     fi
     
-    find "$appsets_dir" -name "*.yaml" -o -name "*.yml"
+    # Find all .yaml and .yml files recursively in the appsets directory
+    # Filter to only include files that contain "kind: ApplicationSet"
+    while IFS= read -r file; do
+        if grep -q "kind: ApplicationSet" "$file" 2>/dev/null; then
+            echo "$file"
+        fi
+    done < <(find "$appsets_dir" -type f \( -name "*.yaml" -o -name "*.yml" \))
 }

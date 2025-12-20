@@ -1,6 +1,8 @@
 #!/bin/bash
 # helm-validate-appsets.sh - Validate ApplicationSet YAML files
 # Validates ApplicationSet syntax and structure
+# Usage: helm-validate-appsets.sh [appsets-dir-pattern]
+#   appsets-dir-pattern: Directory pattern to search for ApplicationSets (default: argo-cd/appsets)
 
 set -euo pipefail
 
@@ -20,13 +22,17 @@ REPO_ROOT=$(find_repo_root) || exit 1
 log_info "Starting ApplicationSet validation"
 log_info "Repository root: $REPO_ROOT"
 
+# Get appsets directory pattern from argument, environment, or use default
+export APPSETS_DIR_PATTERN="${1:-${APPSETS_DIR_PATTERN:-argo-cd/appsets}}"
+log_info "ApplicationSets directory pattern: $APPSETS_DIR_PATTERN"
+
 # Track validation results
 TOTAL_APPSETS=0
 PASSED_APPSETS=0
 FAILED_APPSETS=0
 
 # Validate all ApplicationSets
-log_info "Scanning for ApplicationSets in argo-cd/appsets/ directory..."
+log_info "Scanning for ApplicationSets in ${APPSETS_DIR_PATTERN}/ directory..."
 
 while IFS= read -r appset_file; do
     TOTAL_APPSETS=$((TOTAL_APPSETS + 1))

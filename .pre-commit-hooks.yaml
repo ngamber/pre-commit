@@ -37,9 +37,10 @@
   description: Validates ApplicationSet YAML syntax and structure
   entry: hooks/helm-validate-appsets.sh
   language: script
-  files: ^argo-cd/appsets/.+\.(yaml|yml)$
+  files: \.(yaml|yml)$
   pass_filenames: false
   require_serial: true
+  args: []
 
 # Legacy hook - kept for backward compatibility (same as helm-template-all)
 - id: helm-template-validate
